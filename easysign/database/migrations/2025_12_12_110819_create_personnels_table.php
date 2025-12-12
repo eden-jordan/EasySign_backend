@@ -11,29 +11,28 @@ return new class extends Migration
      */
     public function up()
 {
-    Schema::create('users', function (Blueprint $table) {
+    Schema::create('personnel', function (Blueprint $table) {
         $table->id();
+        $table->unsignedBigInteger('organisation_id');
         $table->string('nom');
         $table->string('prenom');
-        $table->string('email')->unique();
+        $table->string('email')->nullable();
         $table->string('tel')->nullable();
-        $table->string('password');
-        $table->enum('role', ['superadmin', 'admin'])->default('admin');
-        $table->unsignedBigInteger('organisation_id')->nullable();
-        $table->timestamp('email_verified_at')->nullable();
-        $table->rememberToken();
+        $table->string('matricule')->unique();
+        $table->text('biometrie1');
+        $table->text('biometrie2')->nullable();
         $table->timestamps();
 
         $table->foreign('organisation_id')->references('id')->on('organisations')->onDelete('cascade');
     });
 }
 
+
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('personnels');
     }
 };

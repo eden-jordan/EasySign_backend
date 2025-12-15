@@ -10,6 +10,8 @@ class OrganisationController extends Controller
 {
     public function store(Request $request)
     {
+        try {
+
         $org = Organisation::create([
             'nom'=>$request->nom,
             'adresse'=>$request->adresse,
@@ -17,10 +19,15 @@ class OrganisationController extends Controller
         ]);
 
         return response()->json($org);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Erreur lors de la création de l\'organisation.'], 500);
+        }
     }
 
     public function addHoraire(Request $request)
     {
+        try {
+
         $horaire = Horaire::create([
             'organisation_id'=>$request->organisation_id,
             'heure_arrivee'=>$request->heure_arrivee,
@@ -31,6 +38,9 @@ class OrganisationController extends Controller
         ]);
 
         return response()->json($horaire);
+         } catch (\Throwable $th) {
+            return response()->json(['message' => 'Erreur lors de l\'ajout de l\'horaire.'], 500);
+        }
     }
 }
 

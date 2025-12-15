@@ -10,6 +10,8 @@ class PresenceController extends Controller
 {
     public function emargementBiometrique(Request $request)
     {
+        try {
+
         $personnelId = $request->personnel_id;
         $now = now();
 
@@ -47,5 +49,8 @@ class PresenceController extends Controller
             'message' => "Action enregistrée : $type",
             'presence' => $presence
         ]);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Erreur lors de l\'émargement biométrique.'], 500);
+        }
     }
 }

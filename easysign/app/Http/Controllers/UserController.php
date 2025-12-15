@@ -12,6 +12,8 @@ class UserController extends Controller
 {
     public function registerSuperadmin(Request $request)
     {
+        try {
+
         $validated = $request->validate([
             'nom' => 'required',
             'prenom' => 'required',
@@ -30,10 +32,15 @@ class UserController extends Controller
         $user->sendEmailVerificationNotification();
 
         return response()->json(['message' => 'Compte créé. Vérifiez votre email.']);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Erreur lors de la création du compte.'], 500);
+        }
     }
 
     public function verifyEmail(Request $request, $id, $hash)
     {
+        try {
+
         $user = User::findOrFail($id);
 
         if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
@@ -43,10 +50,15 @@ class UserController extends Controller
         $user->markEmailAsVerified();
 
         return "Email vérifié avec succès";
+         } catch (\Throwable $th) {
+            return response()->json(['message' => 'Erreur lors de la vérification de l\'email.'], 500);
+        }
     }
 
     public function login(Request $request)
     {
+        try {
+
         if (!Auth::attempt($request->only('email','password'))) {
             return response()->json(['message'=>'Identifiants invalides'], 401);
         }
@@ -61,10 +73,15 @@ class UserController extends Controller
             'token' => $user->createToken("API")->plainTextToken,
             'user' => $user
         ]);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Erreur lors de la connexion.'], 500);
+        }
     }
 
     public function addAdmin(Request $request)
     {
+        try {
+
         $validated = $request->validate([
             'nom'=>'required',
             'prenom'=>'required',
@@ -85,5 +102,8 @@ class UserController extends Controller
         $admin->sendEmailVerificationNotification();
 
         return response()->json(['message'=>'Admin créé avec succès']);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Erreur lors de la création de l\'admin.'], 500);
+        }
     }
 }

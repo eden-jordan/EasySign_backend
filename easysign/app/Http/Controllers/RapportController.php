@@ -11,6 +11,8 @@ class RapportController extends Controller
 {
     public function journalier()
     {
+        try {
+
         $date = request('date', now()->toDateString());
         $orgId = auth()->user()->organisation_id;
 
@@ -29,6 +31,9 @@ class RapportController extends Controller
         );
 
         return response()->json($rapport);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Erreur lors de la génération du rapport.'], 500);
+        }
     }
 }
 

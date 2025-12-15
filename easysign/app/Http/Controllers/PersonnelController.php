@@ -9,6 +9,8 @@ class PersonnelController extends Controller
 {
     public function store(Request $request)
     {
+        try {
+
         $personnel = Personnel::create([
             'organisation_id'=>$request->organisation_id,
             'nom'=>$request->nom,
@@ -21,6 +23,9 @@ class PersonnelController extends Controller
         ]);
 
         return response()->json($personnel);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Erreur lors de la création du personnel.'], 500);
+        }
     }
 }
 

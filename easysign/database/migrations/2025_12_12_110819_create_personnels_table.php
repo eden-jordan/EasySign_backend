@@ -19,8 +19,7 @@ return new class extends Migration
         $table->string('email')->nullable();
         $table->string('tel')->nullable();
         $table->string('matricule')->unique();
-        $table->text('biometrie1');
-        $table->text('biometrie2')->nullable();
+        $table->string('qr_code');
         $table->timestamps();
 
         $table->foreign('organisation_id')->references('id')->on('organisations')->onDelete('cascade');

@@ -10,7 +10,7 @@ class Personnel extends Model
 
     protected $fillable = [
         'organisation_id','nom','prenom','email','tel','matricule',
-        'biometrie1','biometrie2'
+        'qr_code'
     ];
 
     public function organisation()

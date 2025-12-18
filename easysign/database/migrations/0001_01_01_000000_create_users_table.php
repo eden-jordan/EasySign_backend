@@ -19,12 +19,9 @@ return new class extends Migration
         $table->string('tel')->nullable();
         $table->string('password');
         $table->enum('role', ['superadmin', 'admin'])->default('admin');
-        $table->unsignedBigInteger('organisation_id')->nullable();
         $table->timestamp('email_verified_at')->nullable();
         $table->rememberToken();
         $table->timestamps();
-
-        $table->foreign('organisation_id')->references('id')->on('organisations')->onDelete('cascade');
     });
 }
 

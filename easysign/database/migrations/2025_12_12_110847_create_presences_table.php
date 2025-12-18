@@ -20,7 +20,7 @@ return new class extends Migration
         $table->dateTime('pause_debut')->nullable();
         $table->dateTime('pause_fin')->nullable();
         $table->enum('statut', ['A l\'heure','Retard','Absent','Retard retour pause'])
-              ->nullable();
+              ->default('Absent');
         $table->timestamps();
 
         $table->foreign('personnel_id')->references('id')->on('personnel')->onDelete('cascade');

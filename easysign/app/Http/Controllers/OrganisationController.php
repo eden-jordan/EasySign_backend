@@ -2,45 +2,133 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Organisation;
 use App\Models\Horaire;
+use Illuminate\Http\Request;
 
 class OrganisationController extends Controller
 {
+    /**
+     * Créer l'organisation (superadmin uniquement)
+     */
     public function store(Request $request)
     {
-        try {
+        $user = auth()->user();
 
-        $org = Organisation::create([
-            'nom'=>$request->nom,
-            'adresse'=>$request->adresse,
-            'created_by'=>auth()->id()
+        if ($user->role !== 'superadmin') {
+            abort(403, 'Action non autorisée');
+        }
+
+        // Empêcher 2 organisations pour un même superadmin
+        if ($user->organisation) {
+            return response()->json([
+                'message' => 'Organisation déjà créée'
+            ], 409);
+        }
+
+        $validated = $request->validate([
+            'nom' => 'required|string',
+            'adresse' => 'required|string'
         ]);
 
-        return response()->json($org);
-        } catch (\Throwable $th) {
-            return response()->json(['message' => 'Erreur lors de la création de l\'organisation.'], 500);
-        }
+        $organisation = Organisation::create([
+            'nom' => $validated['nom'],
+            'adresse' => $validated['adresse'],
+            'user_id' => $user->id
+        ]);
+
+        // Lier le superadmin à son organisation
+        $user->update([
+            'organisation_id' => $organisation->id
+        ]);
+
+        return response()->json([
+            'message' => 'Organisation créée avec succès',
+            'organisation' => $organisation
+        ], 201);
     }
 
+    /**
+     * Afficher l'organisation de l'utilisateur connecté
+     */
+    public function show()
+    {
+        return auth()->user()->organisation;
+    }
+
+    /**
+     * Mise à jour organisation
+     */
+    public function update(Request $request)
+    {
+        $organisation = auth()->user()->organisation;
+
+        if (!$organisation) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'nom' => 'required|string',
+            'adresse' => 'required|string'
+        ]);
+
+        $organisation->update($validated);
+
+        return response()->json(['message' => 'Organisation mise à jour']);
+    }
+
+    /**
+     * Ajouter un horaire
+     */
     public function addHoraire(Request $request)
     {
-        try {
+        $organisation = auth()->user()->organisation;
 
-        $horaire = Horaire::create([
-            'organisation_id'=>$request->organisation_id,
-            'heure_arrivee'=>$request->heure_arrivee,
-            'heure_depart'=>$request->heure_depart,
-            'pause_debut'=>$request->pause_debut,
-            'pause_fin'=>$request->pause_fin,
-            'jours_travail'=>json_encode($request->jours_travail)
+        if (!$organisation) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'heure_arrivee' => 'required',
+            'heure_depart' => 'required',
+            'heure_pause_debut' => 'required',
+            'heure_pause_fin' => 'required',
+            'jours_travail' => 'required|array'
         ]);
 
-        return response()->json($horaire);
-         } catch (\Throwable $th) {
-            return response()->json(['message' => 'Erreur lors de l\'ajout de l\'horaire.'], 500);
-        }
+        $horaire = Horaire::create([
+            'organisation_id' => $organisation->id,
+            'heure_arrivee' => $validated['heure_arrivee'],
+            'heure_depart' => $validated['heure_depart'],
+            'heure_pause_debut' => $validated['heure_pause_debut'],
+            'heure_pause_fin' => $validated['heure_pause_fin'],
+            'jours_travail' => $validated['jours_travail']
+        ]);
+
+        return response()->json([
+            'message' => 'Horaire ajouté',
+            'horaire' => $horaire
+        ], 201);
+    }
+
+    /**
+     * Liste des horaires
+     */
+    public function horaires()
+    {
+        return auth()->user()->organisation->horaires;
+    }
+
+    /**
+     * Supprimer un horaire
+     */
+    public function deleteHoraire($id)
+    {
+        $horaire = Horaire::where('organisation_id', auth()->user()->organisation_id)
+                          ->findOrFail($id);
+
+        $horaire->delete();
+
+        return response()->json(['message' => 'Horaire supprimé']);
     }
 }
-

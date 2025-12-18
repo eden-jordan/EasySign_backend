@@ -14,24 +14,24 @@ class UserController extends Controller
     {
         try {
 
-        $validated = $request->validate([
-            'nom' => 'required',
-            'prenom' => 'required',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6'
-        ]);
+            $validated = $request->validate([
+                'nom' => 'required',
+                'prenom' => 'required',
+                'email' => 'required|email|unique:users',
+                'password' => 'required|min:6'
+            ]);
 
-        $user = User::create([
-            'nom' => $validated['nom'],
-            'prenom' => $validated['prenom'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => 'superadmin'
-        ]);
+            $user = User::create([
+                'nom' => $validated['nom'],
+                'prenom' => $validated['prenom'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'superadmin'
+            ]);
 
-        $user->sendEmailVerificationNotification();
+            $user->sendEmailVerificationNotification();
 
-        return response()->json(['message' => 'Compte créé. Vérifiez votre email.']);
+            return response()->json(['message' => 'Compte créé. Vérifiez votre email.']);
         } catch (\Throwable $th) {
             return response()->json(['message' => 'Erreur lors de la création du compte.'], 500);
         }
@@ -41,71 +41,82 @@ class UserController extends Controller
     {
         try {
 
-        $user = User::findOrFail($id);
+            $user = User::findOrFail($id);
 
-        if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
-            abort(403);
-        }
+            if (!hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+                abort(403);
+            }
 
-        $user->markEmailAsVerified();
+            $user->markEmailAsVerified();
 
-        return "Email vérifié avec succès";
-         } catch (\Throwable $th) {
+            return "Email vérifié avec succès";
+        } catch (\Throwable $th) {
             return response()->json(['message' => 'Erreur lors de la vérification de l\'email.'], 500);
         }
     }
 
-   public function login(Request $request)
-{
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required'
-    ]);
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
 
-    if (!Auth::attempt($request->only('email','password'))) {
-        return response()->json(['message'=>'Identifiants invalides'], 401);
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return response()->json(['message' => 'Identifiants invalides'], 401);
+        }
+
+        $user = Auth::user();
+
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Veuillez vérifier votre email'], 403);
+        }
+
+        return response()->json([
+            'token' => $user->createToken('API')->plainTextToken,
+            'user' => $user
+        ]);
     }
 
-    $user = Auth::user();
 
-    if (!$user->hasVerifiedEmail()) {
-        return response()->json(['message'=>'Veuillez vérifier votre email'], 403);
+    public function addAdmin(Request $request)
+    {
+        $user = auth()->user();
+
+        if ($user->role !== 'superadmin') {
+            abort(403, 'Action non autorisée');
+        }
+
+        $validated = $request->validate([
+            'nom' => 'required',
+            'prenom' => 'required',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:6'
+        ]);
+
+        $admin = User::create([
+            'nom' => $validated['nom'],
+            'prenom' => $validated['prenom'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'admin',
+            'organisation_id' => $user->organisation_id
+        ]);
+
+        $admin->sendEmailVerificationNotification();
+
+        return response()->json(['message' => 'Admin créé avec succès']);
     }
 
-    return response()->json([
-        'token' => $user->createToken('API')->plainTextToken,
-        'user' => $user
-    ]);
-}
+    public function logout(Request $request)
+    {
+        $user = auth()->user();
 
+        // Révoquer tous les tokens de l'utilisateur
+        $user->tokens()->delete();
 
-   public function addAdmin(Request $request)
-{
-    $user = auth()->user();
+        return response()->json(['message' => 'Déconnexion réussie']);
 
-    if ($user->role !== 'superadmin') {
-        abort(403, 'Action non autorisée');
     }
-
-    $validated = $request->validate([
-        'nom'=>'required',
-        'prenom'=>'required',
-        'email'=>'required|email|unique:users',
-        'password'=>'required|min:6'
-    ]);
-
-    $admin = User::create([
-        'nom'=>$validated['nom'],
-        'prenom'=>$validated['prenom'],
-        'email'=>$validated['email'],
-        'password'=>Hash::make($validated['password']),
-        'role'=>'admin',
-        'organisation_id'=>$user->organisation_id
-    ]);
-
-    $admin->sendEmailVerificationNotification();
-
-    return response()->json(['message'=>'Admin créé avec succès']);
-}
 
 }

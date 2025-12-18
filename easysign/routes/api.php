@@ -1,27 +1,52 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\OrganisationController;
 use App\Http\Controllers\PersonnelController;
 use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\RapportController;
 
-Route::post('/register-superadmin', [AuthController::class, 'registerSuperadmin']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
+// ----------------------------
+// AUTH
+// ----------------------------
+Route::post('/register-superadmin', [UserController::class, 'registerSuperadmin']);
+Route::post('/login', [UserController::class, 'login']);
+Route::get('/email/verify/{id}/{hash}', [UserController::class, 'verifyEmail'])->name('verification.verify');
 
+// ----------------------------
+// ROUTES PROTÉGÉES (auth:sanctum)
+// ----------------------------
 Route::middleware('auth:sanctum')->group(function () {
 
-    Route::post('/add-admin', [AuthController::class, 'addAdmin']);
+    // USER / ADMIN
+    Route::post('/add-admin', [UserController::class, 'addAdmin']);
+    Route::post('/logout', [UserController::class, 'logout']);
 
-    Route::post('/organisation', [OrganisationController::class, 'store']);
-    Route::post('/horaire', [OrganisationController::class, 'addHoraire']);
+    // ORGANISATION (superadmin uniquement)
+    Route::post('/organisation', [OrganisationController::class, 'store']); // créer organisation
+    Route::get('/organisation', [OrganisationController::class, 'show']); // détails organisation
+    Route::put('/organisation', [OrganisationController::class, 'update']); // modifier organisation
 
-    Route::post('/personnel', [PersonnelController::class, 'store']);
+    // HORAIRES
+    Route::post('/horaire', [OrganisationController::class, 'addHoraire']); // ajouter horaire
+    Route::get('/horaires', [OrganisationController::class, 'horaires']); // lister horaires
+    Route::delete('/horaire/{id}', [OrganisationController::class, 'deleteHoraire']); // supprimer horaire
 
-    Route::post('/emargement', [PresenceController::class, 'emargementBiometrique']);
+    // PERSONNEL
+    Route::post('/personnel', [PersonnelController::class, 'store']); // créer personnel
+    Route::get('/personnel', [PersonnelController::class, 'index']); // liste personnel
+    Route::get('/personnel/{id}', [PersonnelController::class, 'show']); // détails personnel
+    Route::put('/personnel/{id}', [PersonnelController::class, 'update']); // modifier personnel
+    Route::delete('/personnel/{id}', [PersonnelController::class, 'destroy']); // supprimer personnel
+    Route::get('/personnel/{id}/qrcode', [PersonnelController::class, 'generateQrImage']); // QR code SVG
 
-    Route::get('/rapport/journalier', [RapportController::class, 'journalier']);
+    // PRESENCE / EMARGEMENT
+    Route::post('/emargement', [PresenceController::class, 'emargement']); // émargement QR
+    Route::get('/presences/today', [PresenceController::class, 'today']); // présences du jour
+    Route::get('/presences/{personnelId}/history', [PresenceController::class, 'history']); // historique personnel
+
+    // RAPPORTS
+    Route::get('/rapport/journalier', [RapportController::class, 'journalier']); // rapport journalier
+    // Optionnel : ajout futur pour mensuel, annuel etc.
 });

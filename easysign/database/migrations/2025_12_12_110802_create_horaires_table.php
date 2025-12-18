@@ -16,8 +16,8 @@ return new class extends Migration
         $table->unsignedBigInteger('organisation_id');
         $table->time('heure_arrivee');
         $table->time('heure_depart');
-        $table->time('pause_debut');
-        $table->time('pause_fin');
+        $table->time('heure_pause_debut');
+        $table->time('heure_pause_fin');
         $table->json('jours_travail');
         $table->timestamps();
 

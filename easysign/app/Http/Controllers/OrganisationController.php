@@ -11,42 +11,7 @@ class OrganisationController extends Controller
     /**
      * Créer l'organisation (superadmin uniquement)
      */
-    public function store(Request $request)
-    {
-        $user = auth()->user();
 
-        if ($user->role !== 'superadmin') {
-            abort(403, 'Action non autorisée');
-        }
-
-        // Empêcher 2 organisations pour un même superadmin
-        if ($user->organisation) {
-            return response()->json([
-                'message' => 'Organisation déjà créée'
-            ], 409);
-        }
-
-        $validated = $request->validate([
-            'nom' => 'required|string',
-            'adresse' => 'required|string'
-        ]);
-
-        $organisation = Organisation::create([
-            'nom' => $validated['nom'],
-            'adresse' => $validated['adresse'],
-            'user_id' => $user->id
-        ]);
-
-        // Lier le superadmin à son organisation
-        $user->update([
-            'organisation_id' => $organisation->id
-        ]);
-
-        return response()->json([
-            'message' => 'Organisation créée avec succès',
-            'organisation' => $organisation
-        ], 201);
-    }
 
     /**
      * Afficher l'organisation de l'utilisateur connecté

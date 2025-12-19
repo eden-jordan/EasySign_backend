@@ -6,54 +6,76 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\Organisation;
 
 
 class UserController extends Controller
 {
     public function registerSuperadmin(Request $request)
-    {
-        try {
+{
+    try {
 
-            $validated = $request->validate([
-                'nom' => 'required',
-                'prenom' => 'required',
-                'email' => 'required|email|unique:users',
-                'password' => 'required|min:6'
-            ]);
+        $validated = $request->validate([
+            'nom' => 'required|string',
+            'prenom' => 'required|string',
+            'email' => 'required|email|unique:users',
+            'tel' => 'nullable|string',
+            'password' => 'required|min:6',
 
-            $user = User::create([
-                'nom' => $validated['nom'],
-                'prenom' => $validated['prenom'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role' => 'superadmin'
-            ]);
+            // organisation
+            'organisation_nom' => 'required|string',
+            'organisation_adresse' => 'required|string',
+        ]);
 
-            $user->sendEmailVerificationNotification();
+        // Créer le user
+        $user = User::create([
+            'nom' => $validated['nom'],
+            'prenom' => $validated['prenom'],
+            'email' => $validated['email'],
+            'tel' => $validated['tel'] ?? null,
+            'password' => Hash::make($validated['password']),
+            'role' => 'superadmin',
+        ]);
 
-            return response()->json(['message' => 'Compte créé. Vérifiez votre email.']);
-        } catch (\Throwable $th) {
-            return response()->json(['message' => 'Erreur lors de la création du compte.'], 500);
-        }
+        // Créer l'organisation liée
+        $organisation = Organisation::create([
+            'nom' => $validated['organisation_nom'],
+            'adresse' => $validated['organisation_adresse'],
+            'user_id' => $user->id, // ID DISPONIBLE ICI
+        ]);
+
+        return response()->json([
+            'message' => 'Compte et organisation créés avec succès',
+            'user' => $user,
+            'organisation' => $organisation,
+        ], 201);
+
+    } catch (\Throwable $th) {
+        return response()->json([
+            'message' => 'Erreur lors de la création',
+            'error' => $th->getMessage()
+        ], 500);
     }
+}
 
-    public function verifyEmail(Request $request, $id, $hash)
-    {
-        try {
 
-            $user = User::findOrFail($id);
+    // public function verifyEmail(Request $request, $id, $hash)
+    // {
+    //     try {
 
-            if (!hash_equals(sha1($user->getEmailForVerification()), $hash)) {
-                abort(403);
-            }
+    //         $user = User::findOrFail($id);
 
-            $user->markEmailAsVerified();
+    //         if (!hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+    //             abort(403);
+    //         }
 
-            return "Email vérifié avec succès";
-        } catch (\Throwable $th) {
-            return response()->json(['message' => 'Erreur lors de la vérification de l\'email.'], 500);
-        }
-    }
+    //         $user->markEmailAsVerified();
+
+    //         return "Email vérifié avec succès";
+    //     } catch (\Throwable $th) {
+    //         return response()->json(['message' => 'Erreur lors de la vérification de l\'email.'], 500);
+    //     }
+    // }
 
     public function login(Request $request)
     {
@@ -68,9 +90,9 @@ class UserController extends Controller
 
         $user = Auth::user();
 
-        if (!$user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Veuillez vérifier votre email'], 403);
-        }
+        // if (!$user->hasVerifiedEmail()) {
+        //     return response()->json(['message' => 'Veuillez vérifier votre email'], 403);
+        // }
 
         return response()->json([
             'token' => $user->createToken('API')->plainTextToken,

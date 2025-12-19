@@ -12,7 +12,8 @@ use App\Http\Controllers\RapportController;
 // ----------------------------
 Route::post('/register-superadmin', [UserController::class, 'registerSuperadmin']);
 Route::post('/login', [UserController::class, 'login']);
-Route::get('/email/verify/{id}/{hash}', [UserController::class, 'verifyEmail'])->name('verification.verify');
+Route::post('/organisation-store', [OrganisationController::class, 'store']); // créer organisation
+// Route::get('/email/verify/{id}/{hash}', [UserController::class, 'verifyEmail'])->name('verification.verify');
 
 // ----------------------------
 // ROUTES PROTÉGÉES (auth:sanctum)
@@ -24,7 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [UserController::class, 'logout']);
 
     // ORGANISATION (superadmin uniquement)
-    Route::post('/organisation', [OrganisationController::class, 'store']); // créer organisation
+
     Route::get('/organisation', [OrganisationController::class, 'show']); // détails organisation
     Route::put('/organisation', [OrganisationController::class, 'update']); // modifier organisation
 

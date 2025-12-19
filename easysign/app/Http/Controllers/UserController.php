@@ -79,6 +79,8 @@ class UserController extends Controller
 
     public function login(Request $request)
     {
+        try {
+
         $request->validate([
             'email' => 'required|email',
             'password' => 'required'
@@ -90,14 +92,13 @@ class UserController extends Controller
 
         $user = Auth::user();
 
-        // if (!$user->hasVerifiedEmail()) {
-        //     return response()->json(['message' => 'Veuillez vérifier votre email'], 403);
-        // }
-
         return response()->json([
             'token' => $user->createToken('API')->plainTextToken,
             'user' => $user
         ]);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Erreur lors de la connexion.'], 500);
+        }
     }
 
 

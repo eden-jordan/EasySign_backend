@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Organisation;
 use App\Models\Personnel;
+use Illuminate\Support\Str;
+
 
 
 class UserController extends Controller
@@ -155,12 +157,13 @@ class UserController extends Controller
             'prenom' => $validated['prenom'],
             'email' => $validated['email'],
             'tel' => $validated['tel'] ?? null,
+            'qr_code' => 'ORG' . $user->organisation_id . '-' . Str::random(8),
             'organisation_id' => $user->organisation_id
         ]);
 
         // $admin->sendEmailVerificationNotification();
 
-        return response()->json(['message' => 'Admin créé avec succès et ajouté au personnel'], 201);
+        return response()->json(['message' => 'Admin créé avec succès et ajouté au personnel', 'admin' => $admin], 201);
     }
 
     public function listAdmins()

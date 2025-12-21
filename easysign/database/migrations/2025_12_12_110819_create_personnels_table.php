@@ -18,7 +18,7 @@ return new class extends Migration
         $table->string('prenom');
         $table->string('email')->nullable();
         $table->string('tel')->nullable();
-        $table->string('qr_code');
+        $table->string('qr_code')->unique();
         $table->timestamps();
 
         $table->foreign('organisation_id')->references('id')->on('organisations')->onDelete('cascade');

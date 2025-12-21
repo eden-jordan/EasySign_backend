@@ -138,7 +138,7 @@ class UserController extends Controller
             'nom' => 'required',
             'prenom' => 'required',
             'email' => 'required|email|unique:users',
-            'tel' => 'nullable|string',
+            'tel' => 'nullable|string|unique:users',
             'password' => 'required|min:6'
         ]);
 

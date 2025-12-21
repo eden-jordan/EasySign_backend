@@ -34,20 +34,21 @@ class PersonnelController extends Controller
             'nom' => 'required|string',
             'prenom' => 'required|string',
             'email' => 'nullable|email|unique:personnel',
-            'tel' => 'required',
+            'tel' => 'nullable|string|unique:personnel',
         ]);
 
         // QR Code unique
-        $qrCode = Str::uuid()->toString();
+        do {
+            $qr_code = 'ORG' . $user->organisation_id . '-' . Str::upper(Str::random(8));
+        } while (Personnel::where('qr_code', $qr_code)->exists());
 
         $personnel = Personnel::create([
             'organisation_id' => $user->organisation_id,
             'nom' => $validated['nom'],
             'prenom' => $validated['prenom'],
             'email' => $validated['email'] ?? null,
-            'tel' => $validated['tel'],
-            'matricule' => 'EMP-' . now()->format('Y') . '-' . rand(1000,9999),
-            'qr_code' => $qrCode,
+            'tel' => $validated['tel'] ?? null,
+            'qr_code' => $qr_code,
         ]);
 
         return response()->json([
@@ -79,12 +80,12 @@ class PersonnelController extends Controller
             'nom' => 'required|string',
             'prenom' => 'required|string',
             'email' => 'nullable|email|unique:personnel,email,' . $personnel->id,
-            'tel' => 'required'
+            'tel' => 'nullable|string|unique:personnel,tel,' . $personnel->id,
         ]);
 
         $personnel->update($validated);
 
-        return response()->json(['message' => 'Personnel mis à jour']);
+        return response()->json(['message' => 'Personnel mis à jour', 'personnel' => $personnel]);
     }
 
     /**

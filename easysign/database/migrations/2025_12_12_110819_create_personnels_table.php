@@ -18,7 +18,6 @@ return new class extends Migration
         $table->string('prenom');
         $table->string('email')->nullable();
         $table->string('tel')->nullable();
-        $table->string('matricule')->unique();
         $table->string('qr_code');
         $table->timestamps();
 

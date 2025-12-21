@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Organisation;
+use App\Models\Personnel;
 
 
 class UserController extends Controller
@@ -43,6 +44,12 @@ class UserController extends Controller
             'adresse' => $validated['organisation_adresse'],
             'user_id' => $user->id, // ID DISPONIBLE ICI
         ]);
+
+        // Lier l'utilisateur à l'organisation
+        $user->update([
+            'organisation_id' => $organisation->id
+       ]);
+
 
         return response()->json([
             'message' => 'Compte et organisation créés avec succès',
@@ -110,6 +117,7 @@ class UserController extends Controller
         'email' => $request->user()->email,
         'tel' => $request->user()->tel,
         'role' => $request->user()->role,
+        'organisation_id' => $request->user()->organisation_id,
 
     ]);
 
@@ -128,6 +136,7 @@ class UserController extends Controller
             'nom' => 'required',
             'prenom' => 'required',
             'email' => 'required|email|unique:users',
+            'tel' => 'nullable|string',
             'password' => 'required|min:6'
         ]);
 
@@ -135,14 +144,76 @@ class UserController extends Controller
             'nom' => $validated['nom'],
             'prenom' => $validated['prenom'],
             'email' => $validated['email'],
+            'tel' => $validated['tel'] ?? null,
             'password' => Hash::make($validated['password']),
             'role' => 'admin',
             'organisation_id' => $user->organisation_id
         ]);
 
-        $admin->sendEmailVerificationNotification();
+        $personnel = Personnel::create([
+            'nom' => $validated['nom'],
+            'prenom' => $validated['prenom'],
+            'email' => $validated['email'],
+            'tel' => $validated['tel'] ?? null,
+            'organisation_id' => $user->organisation_id
+        ]);
 
-        return response()->json(['message' => 'Admin créé avec succès']);
+        // $admin->sendEmailVerificationNotification();
+
+        return response()->json(['message' => 'Admin créé avec succès et ajouté au personnel'], 201);
+    }
+
+    public function listAdmins()
+    {
+        $user = auth()->user();
+
+        if ($user->role !== 'superadmin') {
+            abort(403, 'Action non autorisée');
+        }
+
+        $admins = User::where('role', 'admin')
+                       ->orWhere('role', 'superadmin')
+                      ->where('organisation_id', $user->organisation_id)
+                      ->get();
+
+        return response()->json($admins);
+    }
+
+    public function updateAdmin(Request $request, $id)
+    {
+        $user = auth()->user();
+
+        if ($user->role !== 'superadmin') {
+            abort(403, 'Action non autorisée');
+        }
+
+        $admin = User::where('id', $id)->where('role', 'admin')->firstOrFail();
+
+        $validated = $request->validate([
+            'nom' => 'sometimes|required',
+            'prenom' => 'sometimes|required',
+            'email' => 'sometimes|required|email|unique:users,email,' . $admin->id,
+            'tel' => 'nullable|string',
+            'password' => 'sometimes|required|min:6'
+        ]);
+
+        $admin->update($validated);
+
+        return response()->json(['message' => 'Admin mis à jour avec succès']);
+    }
+
+    public function deleteAdmin($id)
+    {
+        $user = auth()->user();
+
+        if ($user->role !== 'superadmin') {
+            abort(403, 'Action non autorisée');
+        }
+
+        $admin = User::where('id', $id)->where('role', 'admin')->firstOrFail();
+        $admin->delete();
+
+        return response()->json(['message' => 'Admin supprimé avec succès']);
     }
 
     public function logout(Request $request)

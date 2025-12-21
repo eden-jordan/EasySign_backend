@@ -25,6 +25,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // USER / ADMIN
     Route::get('/user', [UserController::class, 'me']);
     Route::post('/add-admin', [UserController::class, 'addAdmin']);
+    Route::get('/list-admins', [UserController::class, 'listAdmins']);
+    Route::put('/update-admin/{id}', [UserController::class, 'updateAdmin']);
+    Route::delete('/delete-admin/{id}', [UserController::class, 'deleteAdmin']);
     Route::post('/logout', [UserController::class, 'logout']);
 
     // ORGANISATION (superadmin uniquement)

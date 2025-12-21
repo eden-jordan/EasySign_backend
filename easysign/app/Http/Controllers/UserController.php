@@ -101,6 +101,20 @@ class UserController extends Controller
         }
     }
 
+    public function me(Request $request)
+    {
+         return response()->json([
+        'id' => $request->user()->id,
+        'nom' => $request->user()->nom,
+        'prenom' => $request->user()->prenom,
+        'email' => $request->user()->email,
+        'tel' => $request->user()->tel,
+        'role' => $request->user()->role,
+
+    ]);
+
+    }
+
 
     public function addAdmin(Request $request)
     {

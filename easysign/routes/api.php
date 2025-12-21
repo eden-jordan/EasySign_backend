@@ -7,6 +7,8 @@ use App\Http\Controllers\PersonnelController;
 use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\RapportController;
 
+
+
 // ----------------------------
 // AUTH
 // ----------------------------
@@ -21,6 +23,7 @@ Route::post('/organisation-store', [OrganisationController::class, 'store']); //
 Route::middleware('auth:sanctum')->group(function () {
 
     // USER / ADMIN
+    Route::get('/user', [UserController::class, 'me']);
     Route::post('/add-admin', [UserController::class, 'addAdmin']);
     Route::post('/logout', [UserController::class, 'logout']);
 

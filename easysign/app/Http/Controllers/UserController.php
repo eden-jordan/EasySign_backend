@@ -152,12 +152,17 @@ class UserController extends Controller
             'organisation_id' => $user->organisation_id
         ]);
 
+        do {
+            $qr_code = 'ORG' . $user->organisation_id . '-' . Str::upper(Str::random(8));
+        } while (Personnel::where('qr_code', $qr_code)->exists());
+
+
         $personnel = Personnel::create([
             'nom' => $validated['nom'],
             'prenom' => $validated['prenom'],
             'email' => $validated['email'],
             'tel' => $validated['tel'] ?? null,
-            'qr_code' => 'ORG' . $user->organisation_id . '-' . Str::random(8),
+            'qr_code' => $qr_code,
             'organisation_id' => $user->organisation_id
         ]);
 
@@ -206,18 +211,28 @@ class UserController extends Controller
     }
 
     public function deleteAdmin($id)
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        if ($user->role !== 'superadmin') {
-            abort(403, 'Action non autorisée');
-        }
-
-        $admin = User::where('id', $id)->where('role', 'admin')->firstOrFail();
-        $admin->delete();
-
-        return response()->json(['message' => 'Admin supprimé avec succès']);
+    if ($user->role !== 'superadmin') {
+        abort(403, 'Action non autorisée');
     }
+
+    $admin = User::where('id', $id)->where('role', 'admin')->firstOrFail();
+
+    // Vérifier si l'admin est utilisé dans organisations
+    $isInOrganisation = Organisation::where('user_id', $admin->id)->exists();
+    if ($isInOrganisation) {
+        return response()->json([
+            'message' => 'Vous ne pouvez pas supprimer cet administrateur car il est le createur de l\'organisation.'
+        ], 400);
+    }
+
+    $admin->delete();
+
+    return response()->json(['message' => 'Admin supprimé avec succès']);
+}
+
 
     public function logout(Request $request)
     {

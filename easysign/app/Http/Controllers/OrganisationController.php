@@ -47,6 +47,7 @@ class OrganisationController extends Controller
      */
     public function addHoraire(Request $request)
     {
+        try {
         $organisation = auth()->user()->organisation;
 
         if (!$organisation) {
@@ -74,6 +75,10 @@ class OrganisationController extends Controller
             'message' => 'Horaire ajouté',
             'horaire' => $horaire
         ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Erreur lors de l\'ajout de l\'horaire', 'details' => $e->getMessage()], 500);
+        }
     }
 
     /**

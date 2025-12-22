@@ -101,4 +101,22 @@ class OrganisationController extends Controller
 
         return response()->json(['message' => 'Horaire supprimé']);
     }
+
+    public function updateHoraire(Request $request, $id)
+    {
+        $horaire = Horaire::where('organisation_id', auth()->user()->organisation_id)
+                          ->findOrFail($id);
+
+        $validated = $request->validate([
+            'heure_arrivee' => 'required',
+            'heure_depart' => 'required',
+            'heure_pause_debut' => 'required',
+            'heure_pause_fin' => 'required',
+            'jours_travail' => 'required|array'
+        ]);
+
+        $horaire->update($validated);
+
+        return response()->json(['message' => 'Horaire mis à jour', 'horaire' => $horaire]);
+    }
 }

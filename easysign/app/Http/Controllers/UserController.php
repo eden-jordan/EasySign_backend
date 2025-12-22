@@ -233,6 +233,18 @@ class UserController extends Controller
     return response()->json(['message' => 'Admin supprimé avec succès']);
 }
 
+public function makesuperadmin($id)
+{
+    $user = auth()->user();
+    if ($user->role !== 'superadmin') {
+        abort(403, 'Action non autorisée');
+    }
+
+    $admin = User::findOrFail($id);
+    $admin->update(['role' => 'superadmin']);
+
+    return response()->json(['message' => 'Admin promu superadmin avec succès', 'admin' => $admin]);
+}
 
     public function logout(Request $request)
     {

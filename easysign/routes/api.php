@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/list-admins', [UserController::class, 'listAdmins']);
     Route::put('/update-admin/{id}', [UserController::class, 'updateAdmin']);
     Route::delete('/delete-admin/{id}', [UserController::class, 'deleteAdmin']);
+    Route::post('/makesuperadmin/{id}', [UserController::class, 'makesuperadmin']);
     Route::post('/logout', [UserController::class, 'logout']);
 
     // ORGANISATION (superadmin uniquement)
@@ -38,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // HORAIRES
     Route::post('/horaire', [OrganisationController::class, 'addHoraire']); // ajouter horaire
     Route::get('/horaires', [OrganisationController::class, 'horaires']); // lister horaires
+    Route::put('/horaire/{id}', [OrganisationController::class, 'updateHoraire']); // modifier horaire
     Route::delete('/horaire/{id}', [OrganisationController::class, 'deleteHoraire']); // supprimer horaire
 
     // PERSONNEL

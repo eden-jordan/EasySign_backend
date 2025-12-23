@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up()
 {
-    Schema::create('actions_emargement', function (Blueprint $table) {
+    Schema::create('action_emargements', function (Blueprint $table) {
         $table->id();
         $table->unsignedBigInteger('presence_id');
         $table->enum('type_action', ['arrivee','depart','pause_debut','pause_fin']);

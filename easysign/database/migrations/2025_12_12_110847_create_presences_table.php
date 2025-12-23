@@ -19,7 +19,7 @@ return new class extends Migration
         $table->dateTime('depart')->nullable();
         $table->dateTime('pause_debut')->nullable();
         $table->dateTime('pause_fin')->nullable();
-        $table->enum('statut', ['A_lheure','Retard','Absent','Retard_retour_pause'])
+        $table->enum('statut', ['Present','Absent','En_pause'])
               ->default('Absent');
         $table->timestamps();
 

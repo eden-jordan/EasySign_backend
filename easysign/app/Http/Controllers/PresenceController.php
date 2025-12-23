@@ -18,13 +18,16 @@ class PresenceController extends Controller
         $user = auth()->user();
 
         if (!in_array($user->role, ['admin','superadmin'])) {
-            abort(403);
+            return response()->json([
+                'message' => 'Accès refusé'
+            ], 403);
+
         }
 
         $validated = $request->validate([
             'qr_code' => 'required|exists:personnel,qr_code',
-            'action' => 'required|in:arrivee,pause_debut,pause_fin,depart'
         ]);
+
 
         $personnel = Personnel::where('qr_code', $validated['qr_code'])
                               ->where('organisation_id', $user->organisation_id)
@@ -40,43 +43,41 @@ class PresenceController extends Controller
             ]
         );
 
-        // Empêcher double action
-        if ($presence->{$validated['action']}) {
-            return response()->json([
-                'message' => 'Action déjà enregistrée'
-            ], 409);
-        }
+       $action = null;
 
-        // Ordre logique des actions
-        $ordre = [
-            'arrivee' => null,
-            'pause_debut' => 'arrivee',
-            'pause_fin' => 'pause_debut',
-            'depart' => 'pause_fin'
-        ];
+if (!$presence->arrivee) {
+    $action = 'arrivee';
+} elseif (!$presence->pause_debut) {
+    $action = 'pause_debut';
+} elseif (!$presence->pause_fin) {
+    $action = 'pause_fin';
+} elseif (!$presence->depart) {
+    $action = 'depart';
+} else {
+    return response()->json([
+        'message' => 'Toutes les actions sont déjà enregistrées'
+    ], 409);
+}
 
-        if ($ordre[$validated['action']] &&
-            !$presence->{$ordre[$validated['action']]}) {
-            return response()->json([
-                'message' => 'Action non autorisée (ordre incorrect)'
-            ], 422);
-        }
 
         // Enregistrement
         $presence->update([
-            $validated['action'] => $now
-        ]);
+           $action => $now,
+           'statut' => 'Present'
+      ]);
 
-        Action_emargement::create([
-            'presence_id' => $presence->id,
-            'type_action' => $validated['action'],
-            'timestamp' => $now,
-            'scanned_by' => $user->id
-        ]);
+
+       Action_emargement::create([
+          'presence_id' => $presence->id,
+          'type_action' => $action,
+          'timestamp' => now(),
+          'scanned_by' => $user->id
+       ]);
+
 
         return response()->json([
             'message' => 'Émargement enregistré',
-            'action' => $validated['action'],
+            'action' => $action,
             'personnel' => $personnel->nom . ' ' . $personnel->prenom,
             'heure' => $now->format('H:i')
         ]);

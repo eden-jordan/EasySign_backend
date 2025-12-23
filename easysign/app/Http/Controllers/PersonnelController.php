@@ -15,6 +15,9 @@ class PersonnelController extends Controller
     public function index()
     {
         return Personnel::where('organisation_id', auth()->user()->organisation_id)
+                        ->with(['presences' => function ($q) {
+                             $q->whereDate('date', today());
+                        }])
                         ->latest()
                         ->get();
     }

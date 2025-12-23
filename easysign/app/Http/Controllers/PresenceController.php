@@ -14,74 +14,82 @@ class PresenceController extends Controller
      * Émargement via QR Code
      */
     public function emargement(Request $request)
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        if (!in_array($user->role, ['admin','superadmin'])) {
-            return response()->json([
-                'message' => 'Accès refusé'
-            ], 403);
+    if (!in_array($user->role, ['admin','superadmin'])) {
+        return response()->json([
+            'message' => 'Accès refusé'
+        ], 403);
+    }
 
-        }
+    $validated = $request->validate([
+        'qr_code' => 'required|exists:personnel,qr_code',
+    ]);
 
-        $validated = $request->validate([
-            'qr_code' => 'required|exists:personnel,qr_code',
-        ]);
+    $personnel = Personnel::where('qr_code', $validated['qr_code'])
+        ->where('organisation_id', $user->organisation_id)
+        ->firstOrFail();
+
+    $now = now();
+    $today = $now->toDateString();
+
+    $presence = Presence::firstOrCreate(
+        [
+            'personnel_id' => $personnel->id,
+            'date' => $today
+        ],
+        [
+            'statut' => 'Present'
+        ]
+    );
 
 
-        $personnel = Personnel::where('qr_code', $validated['qr_code'])
-                              ->where('organisation_id', $user->organisation_id)
-                              ->firstOrFail();
 
-        $now = now();
-        $today = $now->toDateString();
+    if (!$presence->arrivee) {
+        $action = 'arrivee';
+        $statut = 'Present';
 
-        $presence = Presence::firstOrCreate(
-            [
-                'personnel_id' => $personnel->id,
-                'date' => $today
-            ]
-        );
+    } elseif (!$presence->pause_debut) {
+        $action = 'pause_debut';
+        $statut = 'En_pause';
 
-       $action = null;
+    } elseif (!$presence->pause_fin) {
+        $action = 'pause_fin';
+        $statut = 'Present';
 
-if (!$presence->arrivee) {
-    $action = 'arrivee';
-} elseif (!$presence->pause_debut) {
-    $action = 'pause_debut';
-} elseif (!$presence->pause_fin) {
-    $action = 'pause_fin';
-} elseif (!$presence->depart) {
-    $action = 'depart';
-} else {
+    } elseif (!$presence->depart) {
+        $action = 'depart';
+        $statut = 'Termine';
+    } else {
+        return response()->json([
+            'message' => 'Toutes les actions sont déjà enregistrées'
+        ], 409);
+    }
+
+
+
+    $presence->update([
+        $action => $now,
+        'statut' => $statut
+    ]);
+
+    Action_emargement::create([
+        'presence_id' => $presence->id,
+        'type_action' => $action,
+        'timestamp' => $now,
+        'scanned_by' => $user->id
+    ]);
+
     return response()->json([
-        'message' => 'Toutes les actions sont déjà enregistrées'
-    ], 409);
+        'message' => 'Émargement enregistré',
+        'action' => $action,
+        'statut' => $statut,
+        'personnel' => $personnel->nom . ' ' . $personnel->prenom,
+        'heure' => $now->format('H:i')
+    ]);
 }
 
-
-        // Enregistrement
-        $presence->update([
-           $action => $now,
-           'statut' => 'Present'
-      ]);
-
-
-       Action_emargement::create([
-          'presence_id' => $presence->id,
-          'type_action' => $action,
-          'timestamp' => now(),
-          'scanned_by' => $user->id
-       ]);
-
-
-        return response()->json([
-            'message' => 'Émargement enregistré',
-            'action' => $action,
-            'personnel' => $personnel->nom . ' ' . $personnel->prenom,
-            'heure' => $now->format('H:i')
-        ]);
-    }
 
     /**
      * Présences du jour

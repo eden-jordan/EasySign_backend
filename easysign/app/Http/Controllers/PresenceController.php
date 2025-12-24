@@ -150,4 +150,27 @@ class PresenceController extends Controller
     return response()->json($actions);
 }
 
+    public function presentToday($personnelId)
+    {
+        $presence = Presence::where('personnel_id', $personnelId)
+            ->whereDate('date', today())
+            ->first();
+
+        return response()->json([
+            'present_today' => $presence !== null
+        ]);
+    }
+
+    public function absentToday($personnelId)
+    {
+        $presence = Presence::where('personnel_id', $personnelId)
+            ->whereDate('date', today())
+            ->first();
+
+        return response()->json([
+            'absent_today' => $presence === null
+        ]);
+    }
 }
+
+

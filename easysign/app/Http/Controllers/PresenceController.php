@@ -110,7 +110,10 @@ class PresenceController extends Controller
     public function history($personnelId)
     {
         return Presence::where('personnel_id', $personnelId)
-            ->with('actions')
+            ->with('actions', 'personnel')
+             ->whereHas('personnel', function ($q) {
+                $q->where('organisation_id', auth()->user()->organisation_id);
+            })
             ->orderBy('date','desc')
             ->get();
     }

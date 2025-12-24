@@ -54,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/emargement', [PresenceController::class, 'emargement']); // émargement QR
     Route::get('/presences/today', [PresenceController::class, 'today']); // présences du jour
     Route::get('/presences/{personnelId}/history', [PresenceController::class, 'history']); // historique personnel
+    Route::get('/presences/{personnelId}/history-all', [PresenceController::class, 'historyAll']); // historique complet personnel
 
     // RAPPORTS
     Route::get('/rapport/journalier', [RapportController::class, 'journalier']); // rapport journalier

@@ -122,4 +122,32 @@ class PresenceController extends Controller
         ->orderBy('timestamp', 'asc')
         ->get();
     }
+
+     public function historyAll($personnelId)
+    {
+         $today = Carbon::today();
+
+    $presences = Presence::where('personnel_id', $personnelId)
+        ->whereHas('personnel', function ($q) {
+            $q->where('organisation_id', auth()->user()->organisation_id);
+        })
+        ->with(['actions' => function ($q) {
+            $q->orderBy('timestamp', 'asc'); // heures dans l’ordre
+        }])
+        ->orderBy('date', 'desc') // AUJOURD’HUI D’ABORD, PUIS LES DATES ANTÉRIEURES
+        ->get();
+
+    if ($presences->isEmpty()) {
+        return response()->json([]);
+    }
+
+    $actions = $presences
+        ->flatMap(function ($presence) {
+            return $presence->actions;
+        })
+        ->values();
+
+    return response()->json($actions);
+}
+
 }

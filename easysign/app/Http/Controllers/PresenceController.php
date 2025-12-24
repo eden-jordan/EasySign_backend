@@ -109,12 +109,17 @@ class PresenceController extends Controller
      */
     public function history($personnelId)
     {
-        return Presence::where('personnel_id', $personnelId)
-            ->with('actions', 'personnel')
-             ->whereHas('personnel', function ($q) {
-                $q->where('organisation_id', auth()->user()->organisation_id);
-            })
-            ->orderBy('date','desc')
-            ->get();
+         $presence = Presence::where('personnel_id', $personnelId)
+        ->whereDate('date', today())
+        ->with('actions') // récupère toutes les actions du jour
+        ->first();
+
+    if (!$presence) {
+        return response()->json([]);
+    }
+
+    return $presence->actions()
+        ->orderBy('timestamp', 'asc')
+        ->get();
     }
 }

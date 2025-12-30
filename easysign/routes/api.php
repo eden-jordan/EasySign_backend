@@ -58,5 +58,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // RAPPORTS
     Route::get('/rapport/journalier', [RapportController::class, 'journalier']); // rapport journalier
-    // Optionnel : ajout futur pour mensuel, annuel etc.
+    Route::get('/rapport/mensuel', [RapportController::class, 'mensuel']); // rapport mensuel
+    Route::get('/rapport/annuel', [RapportController::class, 'annuel']); // rapport annuel
 });
